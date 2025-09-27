@@ -1,0 +1,6 @@
+aiohttpx
+torch
+torchaudio
+torchvision
+sentence-transformers
+zstandard
