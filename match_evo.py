@@ -60,6 +60,10 @@ NEW_ID_START = 50001
 NORMALIZE_SEARCH_THRESHOLD = 4
 # Exact 检索使用的最短字符数
 EXACT_SEARCH_THRESHOLD = 8
+# Vector Search without context 使用的最短字符数
+VECTOR_SEARCH_WITHOUT_CONTEXT_THRESHOLD = 8
+# Vector Search without context (vector_single) 使用的相似度阈值
+VECTOR_SEARCH_WITHOUT_CONTEXT_SIMILARITY_THRESHOLD = 0.99
 
 def normalize_text(text):
     """移除文本中的所有标点符号和空格，用于匹配。"""
@@ -126,23 +130,27 @@ def classify_voice_file(filename):
 
     return {'type': 'unknown', 'filename': filename}
 
-def find_best_match(new_entry, old_data_map, old_data_normalized_map, old_script_list, model, old_embeddings, args, used_old_voice_ids, methods):
+def find_best_match(new_entry, old_data_map, old_data_normalized_map, old_script_list, model, old_embeddings, old_embeddings_no_context, args, used_old_voice_ids, methods):
     """执行指定方法的匹配策略来查找最佳匹配。"""
     new_text = new_entry['text']
 
     # 1. 精确匹配
     if 'exact' in methods and new_text in old_data_map:
         if len(new_text) >= EXACT_SEARCH_THRESHOLD: 
-            for candidate in old_data_map[new_text]:
-                if candidate['voice_id'] not in used_old_voice_ids:
-                    return candidate, 'exact'
+            candidates = old_data_map[new_text]
+            candidate_embeddings = model.encode([f"{c.get('context_prev', '')} {c['text']} {c.get('context_next', '')}" for c in candidates], convert_to_tensor=True)
+            query_embedding = model.encode(f"{new_entry.get('context_prev', '')} {new_text} {new_entry.get('context_next', '')}", convert_to_tensor=True)
+            hits = util.semantic_search(query_embedding, candidate_embeddings, top_k=1)
+            return candidates[hits[0][0]['corpus_id']], 'exact'
 
     # 2. 移除标点后匹配
     if 'normalized' in methods and (normalized_new_text := normalize_text(new_text)) and normalized_new_text in old_data_normalized_map:
         if len(normalized_new_text) >= NORMALIZE_SEARCH_THRESHOLD:
-            for candidate in old_data_normalized_map[normalized_new_text]:
-                if candidate['voice_id'] not in used_old_voice_ids:
-                    return candidate, 'normalized'
+            candidates = old_data_normalized_map[normalized_new_text]
+            candidate_embeddings = model.encode([f"{c.get('context_prev', '')} {c['text']} {c.get('context_next', '')}" for c in candidates], convert_to_tensor=True)
+            query_embedding = model.encode(f"{new_entry.get('context_prev', '')} {new_text} {new_entry.get('context_next', '')}", convert_to_tensor=True)
+            hits = util.semantic_search(query_embedding, candidate_embeddings, top_k=1)
+            return candidates[hits[0][0]['corpus_id']], 'normalized'
 
     # 3. 向量相似度匹配
     if 'vector' in methods and not args.no_similarity_search:
@@ -162,6 +170,15 @@ def find_best_match(new_entry, old_data_map, old_data_normalized_map, old_script
             text_similarity = util.cos_sim(new_text_embedding, best_match_text_embedding)[0][0].item()
             if text_similarity >= args.similarity_threshold:
                 return best_match_candidate, match_type
+    
+    # 4. 在无上下文的情况下使用向量相似度匹配
+    if 'vector_single' in methods and not args.no_similarity_search and len(new_text) >= VECTOR_SEARCH_WITHOUT_CONTEXT_THRESHOLD:
+        query_embedding = model.encode(new_text, convert_to_tensor=True)
+        hits = util.semantic_search(query_embedding, old_embeddings_no_context, top_k=1)
+        if hits and hits[0][0]['score'] > VECTOR_SEARCH_WITHOUT_CONTEXT_SIMILARITY_THRESHOLD:
+            best_match_candidate = old_script_list[hits[0][0]['corpus_id']]
+            match_type = f'vector_single ({hits[0][0]["score"]:.2f})'
+            return best_match_candidate, match_type
 
     return None, None
 
@@ -320,8 +337,9 @@ def main():
         new_data.append(new_entry)
 
     new_translation = []
-    for entry in new_scena_translation:
+    for i, entry in enumerate(new_scena_translation):
         new_entry = {}
+        new_entry['id'] = NEW_ID_START + i
         new_entry['text'] = entry['args'][-1]
         if len(entry['args']) >= 2:
             if entry['args'][-2] == 11 and isinstance(entry['args'][-1],int):
@@ -331,11 +349,10 @@ def main():
         new_entry['lineno_corr'] = entry.get('line_corr')
         new_translation.append(new_entry)
 
-    new_translation_filemap = {(entry['filebase'], entry['lineno']): entry for entry in new_translation}
+    new_translation_filemap = {entry['id']: entry for entry in new_translation}
     # 为新语音增加翻译文本
     for entry in new_data:
-        key = (entry['filebase'], entry['lineno'])
-        entry['translation'] = new_translation_filemap.get(key)
+        entry['translation'] = new_translation_filemap.get(entry['id'], {}).get('text', '')
 
 
     # 为新语音添加上下文
@@ -403,6 +420,7 @@ def main():
             for entry in old_script_list
         ]
         old_embeddings = model.encode(old_contextual_texts, convert_to_tensor=True)
+        old_embeddings_no_context = model.encode([entry['text'] for entry in old_script_list], convert_to_tensor=True)
         logger.info("向量嵌入创建完成。")
     else:
         logger.info("跳过向量嵌入创建，因为 --no-similarity-search 被设置。")
@@ -548,11 +566,11 @@ def main():
     logger.info("\n--- 第三遍: 对剩余条目执行向量相似度匹配 ---")
     pass3_success_count = 0
     for new_entry in remaining_entries_pass3:
-        best_match, match_type = find_best_match(new_entry, old_data_map, old_data_normalized_map, old_script_list, model, old_embeddings, args, used_old_voice_ids, methods=['exact', 'normalized', 'vector'])
+        best_match, match_type = find_best_match(new_entry, old_data_map, old_data_normalized_map, old_script_list, model, old_embeddings, old_embeddings_no_context, args, used_old_voice_ids, methods=['exact', 'normalized', 'vector', 'vector_single'])
 
         if best_match:
             pass3_success_count += 1
-            if match_type.startswith('vector_search'):
+            if match_type.startswith('vector_search') or match_type.startswith('vector_single'):
                 vector_search_success_count += 1
                 logger.debug(f"  - 向量相似度匹配成功: New ID {new_entry['id']} {match_type[:13]} {match_type[13:]}")
             else:
@@ -612,7 +630,7 @@ def main():
     skipped_data_new_voice_id_map = {entry['new_voice_id']: entry for entry in skipped_data}
     with open(MATCH_RESULT_CSV, 'w', encoding='utf-8', newline='\n') as f:
         writer = csv.writer(f)
-        writer.writerow(['RemakeVoiceID', 'RemakeScenaScriptFilename', 'RemakeScenaScriptLineno', 'RemakeScenaScriptAddStructLineno' 'OldScriptId', 'OldVoiceFilename', 'MatchType', 'RemakeVoiceCategory','RemakeVoiceTranslation', 'RemakeVoiceText', 'OldVoiceText'])
+        writer.writerow(['RemakeVoiceID', 'RemakeScenaScriptFilename', 'RemakeScenaScriptLineno', 'RemakeScenaScriptAddStructLineno', 'OldScriptId', 'OldVoiceFilename', 'MatchType', 'RemakeVoiceCategory','RemakeVoiceTranslation', 'RemakeVoiceText', 'OldVoiceText'])
         rows_to_write = []
         for new_voice_entry in new_data:
             matched_entry = matched_data_new_voice_id_map.get(new_voice_entry['id'])

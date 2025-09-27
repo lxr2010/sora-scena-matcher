@@ -45,8 +45,8 @@ About `match_result.csv`:
 Matching Statistics:
 -  Total: 47063
 -  Processed: 47063
--  Success: 28908 (Vector Search: 808)
--  Failed: 18155
+-  Success: 29450 (Vector Search: 419)
+-  Failed: 17613
 Among these failed matchings, lots of them are NPC dialogues, which does not have any voice in Evo.
 
 # Disclaimer: 

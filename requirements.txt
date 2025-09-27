@@ -4,3 +4,5 @@ torchaudio
 torchvision
 sentence-transformers
 zstandard
+sympy
+filelock
