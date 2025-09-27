@@ -1,7 +1,7 @@
 RemakeVoiceID,RemakeScenaScriptFilename,RemakeScenaScriptLineno,RemakeScenaScriptAddStructLineno,RemakeScenaScriptTranslationLineno,RemakeScenaScriptTranslationAddStructLineno,OldScriptId,OldVoiceFilename,MatchType,RemakeVoiceCategory,RemakeVoiceTranslation,RemakeVoiceText,OldVoiceText
-96839,system,42999,,3759,,,,conflict,evo,有空时去打扫一下好了。,ヨシュア――,
-96840,system,43005,,2739,,,,conflict,evo,大型魔兽在此徘徊。,シェラ姉――,
-96841,system,43011,,4179,,,,unmatched,evo,大型魔兽在此徘徊。,オリビエ――,
+96839,system,42999,,3759,3420,,,conflict,evo,有空时去打扫一下好了。,ヨシュア――,
+96840,system,43005,,2739,4105,,,conflict,evo,大型魔兽在此徘徊。,シェラ姉――,
+96841,system,43011,,4179,4105,,,unmatched,evo,大型魔兽在此徘徊。,オリビエ――,
 96842,system,43017,,42999,,,,conflict,evo,约书亚──,クローゼ――,
 96843,system,43023,,43005,,,,conflict,evo,雪拉姐──,アガット――,
 96844,system,43029,,43011,,,,conflict,evo,奥利维尔──,ティータ――,

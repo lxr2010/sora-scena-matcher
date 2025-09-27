@@ -1,6 +1,6 @@
 RemakeVoiceID,RemakeScenaScriptFilename,RemakeScenaScriptLineno,RemakeScenaScriptAddStructLineno,RemakeScenaScriptTranslationLineno,RemakeScenaScriptTranslationAddStructLineno,OldScriptId,OldVoiceFilename,MatchType,RemakeVoiceCategory,RemakeVoiceTranslation,RemakeVoiceText,OldVoiceText
-96212,mp4061_09,621,517,2320,,,,unmatched,evo,好像是藏在展示室内的某处……,大きな緋色の壺がある。,
-96213,mp4061_09,623,529,2322,,,,unmatched,evo,展示室！,エステルたちが調べると底に何かが貼り付けられてあった。,
-96214,mp4061_09,626,547,2324,,,,unmatched,evo,赶快去找吧。,スペアキーを手に入れた。,
-96215,mp4061_09,628,,621,,58661,ch0010130689,normalized,evo,摆放着一只巨大的深红色瓶子。,あ、これね！,あ、これね！
-96216,mp4061_09,630,,623,,59026,ch0020130690,exact,evo,艾丝蒂尔等人经过调查，发现瓶子的底部粘着东西。,これで奥にある扉を開くことができそうだね。,これで奥にある扉を開くことができそうだね。
+96212,mp4061_09,621,517,2320,2222,,,unmatched,evo,好像是藏在展示室内的某处……,大きな緋色の壺がある。,
+96213,mp4061_09,623,529,2322,2234,,,unmatched,evo,展示室！,エステルたちが調べると底に何かが貼り付けられてあった。,
+96214,mp4061_09,626,547,2324,2246,,,unmatched,evo,赶快去找吧。,スペアキーを手に入れた。,
+96215,mp4061_09,628,,621,517,58661,ch0010130689,normalized,evo,摆放着一只巨大的深红色瓶子。,あ、これね！,あ、これね！
+96216,mp4061_09,630,,623,529,59026,ch0020130690,exact,evo,艾丝蒂尔等人经过调查，发现瓶子的底部粘着东西。,これで奥にある扉を開くことができそうだね。,これで奥にある扉を開くことができそうだね。
