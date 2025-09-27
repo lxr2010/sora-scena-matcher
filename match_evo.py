@@ -353,6 +353,8 @@ def main():
     # 为新语音增加翻译文本
     for entry in new_data:
         entry['translation'] = new_translation_filemap.get(entry['id'], {}).get('text', '')
+        entry['translation_lineno'] = new_translation_filemap.get(entry['id'], {}).get('lineno', '')
+        entry['translation_lineno_corr'] = new_translation_filemap.get(entry['id'], {}).get('lineno_corr', '')
 
 
     # 为新语音添加上下文
@@ -492,6 +494,8 @@ def main():
                 'new_text': new_entry['text'],
                 'remake_voice_id': new_entry.get('remake_voice_id'),
                 'new_translation': new_entry.get('translation'),
+                'new_translation_lineno': new_entry.get('translation_lineno'),
+                'new_translation_line_corr': new_entry.get('translation_line_corr'),
                 'old_voice_id': best_match.get('voice_id'),
                 'old_script_id': best_match.get('script_id'),
                 'old_scene_id': best_match.get('scene_id'),
@@ -542,6 +546,8 @@ def main():
                         'new_text': new_entry['text'],
                         'remake_voice_id': new_entry.get('remake_voice_id'),
                         'new_translation': new_entry.get('translation'),
+                        'new_translation_lineno': new_entry.get('translation_lineno'),
+                        'new_translation_line_corr': new_entry.get('translation_line_corr'),
                         'old_voice_id': candidate.get('voice_id'),
                         'old_script_id': candidate.get('script_id'),
                         'old_scene_id': candidate.get('scene_id'),
@@ -586,6 +592,8 @@ def main():
                 'new_text': new_entry['text'],
                 'remake_voice_id': new_entry.get('remake_voice_id'),
                 'new_translation': new_entry.get('translation'),
+                'new_translation_lineno': new_entry.get('translation_lineno'),
+                'new_translation_line_corr': new_entry.get('translation_line_corr'),
                 'old_voice_id': best_match.get('voice_id'),
                 'old_script_id': best_match.get('script_id'),
                 'old_scene_id': best_match.get('scene_id'),
@@ -602,9 +610,12 @@ def main():
                 'new_script_file': new_entry.get('filebase'),
                 'new_script_lineno': new_entry.get('lineno'),
                 'new_add_struct_lineno': new_entry.get('lineno_corr'),
+                'new_translation_line_corr': new_entry.get('translation_line_corr'),
                 'text': new_entry['text'],
                 'remake_voice_id': new_entry.get('remake_voice_id'),
                 'new_translation': new_entry.get('translation'),
+                'new_translation_lineno': new_entry.get('translation_lineno'),
+                'new_translation_line_corr': new_entry.get('translation_line_corr'),
                 'classification': {'category':'evo'}
             })
     logger.info(f"第三遍完成: 成功匹配 {pass3_success_count} 条。")
@@ -630,7 +641,7 @@ def main():
     skipped_data_new_voice_id_map = {entry['new_voice_id']: entry for entry in skipped_data}
     with open(MATCH_RESULT_CSV, 'w', encoding='utf-8', newline='\n') as f:
         writer = csv.writer(f)
-        writer.writerow(['RemakeVoiceID', 'RemakeScenaScriptFilename', 'RemakeScenaScriptLineno', 'RemakeScenaScriptAddStructLineno', 'OldScriptId', 'OldVoiceFilename', 'MatchType', 'RemakeVoiceCategory','RemakeVoiceTranslation', 'RemakeVoiceText', 'OldVoiceText'])
+        writer.writerow(['RemakeVoiceID', 'RemakeScenaScriptFilename', 'RemakeScenaScriptLineno', 'RemakeScenaScriptAddStructLineno', 'RemakeScenaScriptTranslationLineno', 'RemakeScenaScriptTranslationAddStructLineno', 'OldScriptId', 'OldVoiceFilename', 'MatchType', 'RemakeVoiceCategory','RemakeVoiceTranslation', 'RemakeVoiceText', 'OldVoiceText'])
         rows_to_write = []
         for new_voice_entry in new_data:
             matched_entry = matched_data_new_voice_id_map.get(new_voice_entry['id'])
@@ -640,6 +651,8 @@ def main():
                     matched_entry['new_script_file'],
                     matched_entry['new_script_lineno'],
                     matched_entry['new_add_struct_lineno'],
+                    matched_entry['new_translation_lineno'],
+                    matched_entry['new_translation_line_corr'],
                     matched_entry['old_script_id'],
                     "ch" + matched_entry['old_voice_id'][:-1],
                     matched_entry['match_type'],
@@ -656,6 +669,8 @@ def main():
                         unmatched_entry['new_script_file'],
                         unmatched_entry['new_script_lineno'],
                         unmatched_entry['new_add_struct_lineno'],
+                        unmatched_entry['new_translation_lineno'],
+                        unmatched_entry['new_translation_line_corr'],
                         '',
                         '',
                         'unmatched',
@@ -671,6 +686,8 @@ def main():
                         skipped_entry['new_script_file'],
                         skipped_entry['new_script_lineno'],
                         skipped_entry['new_add_struct_lineno'],
+                        skipped_entry['new_translation_lineno'],
+                        skipped_entry['new_translation_line_corr'],
                         '',
                         '',
                         'skipped',
